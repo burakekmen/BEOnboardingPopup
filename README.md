@@ -20,6 +20,8 @@
 - [x] **Swift Package Manager (SPM):** Easy installation.
 - [x] **iOS 15+ Support:** Supports Dark Mode and dynamic system colors.
 
+### [Medium Article](https://medium.com/@burakekmen/building-spotlight-onboarding-flows-in-swift-with-beonboardingpopup-2fb7524a89cc)
+
 ## 📲 Installation
 
 ### Swift Package Manager
