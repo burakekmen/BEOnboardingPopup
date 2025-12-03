@@ -34,6 +34,108 @@ To integrate **BEOnboardingPopup** into your Xcode project using SPM:
 4. Click Add Package.
 
 
+## 📝 SwiftUI Usage (Workaround)
+
+```swift
+import SwiftUI
+import BEOnboardingPopup
+
+struct SwiftUIExampleView: View {
+    
+    // 1. State variables to capture the global frames (screen coordinates) of target views.
+    // Unlike UIKit, SwiftUI views don't expose a direct 'frame' property easily,
+    // so we need to capture them manually using GeometryReader.
+    @State private var profileFrame: CGRect = .zero
+    @State private var settingsFrame: CGRect = .zero
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 40) {
+                
+                // --- Target 1: Profile Image ---
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .frame(width: 80, height: 80)
+                    .foregroundColor(.gray)
+                    // 2. We use a transparent overlay with GeometryReader to get the frame.
+                    .overlay(
+                        GeometryReader { geo in
+                            Color.clear
+                                .onAppear {
+                                    // Capture the frame in the global screen coordinate space
+                                    self.profileFrame = geo.frame(in: .global)
+                                }
+                        }
+                    )
+                
+                Text("Welcome to the App!")
+                    .font(.title2)
+                
+                // --- Target 2: Settings Button ---
+                Button(action: {}) {
+                    HStack {
+                        Image(systemName: "gearshape.fill")
+                        Text("Settings")
+                    }
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(10)
+                }
+                // Attaching the reader to the second target
+                .overlay(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear {
+                                self.settingsFrame = geo.frame(in: .global)
+                            }
+                    }
+                )
+                
+                Spacer()
+                
+                // --- Trigger Button ---
+                Button("Start Onboarding Tour") {
+                    startOnboarding()
+                }
+                .font(.headline)
+                .padding(.bottom, 50)
+            }
+            .navigationTitle("SwiftUI Demo")
+        }
+    }
+    
+    // 3. Logic to bridge SwiftUI and the UIKit Popup Library
+    func startOnboarding() {
+        // A. Find the Root View Controller.
+        // Since BEOnboardingPopup is a UIViewController, it needs a host to be presented.
+        // We access the active window scene to find the top-most controller.
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else {
+            print("Error: Could not find Root View Controller")
+            return
+        }
+        
+        // B. Prepare the steps using the captured CGRects (States).
+        // Note: We act as if we are passing manual frames instead of UIView references.
+        let stepsWithFrames: [(MyOnboardingStep, CGRect)] = [
+            (.profile, profileFrame),
+            (.settings, settingsFrame)
+        ]
+        
+        // C. Call the Manager
+        // Use the method that accepts manual frames (CGRect).
+        BEOnboardingPopupManager.shared.show(
+            on: rootVC,
+            stepsWithFrames: stepsWithFrames,
+            onFinish: {
+                print("SwiftUI Onboarding Completed")
+            }
+        )
+    }
+}
+```
+
+
 ## 🚀 Quick Start
 1. Define Your Steps
 Create an enum that conforms to the BEOnboardingStepable protocol. This defines the content of your popup steps.
