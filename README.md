@@ -146,4 +146,4 @@ Swift 5.0+
 
 
 ## 📄 License
-BEOnboardingPopup is available under the MIT license. See the [LICENSE](LICENSE) file for more info.
+BEOnboardingPopup is available under the MIT license. See the [LICENSE](https://github.com/burakekmen/BEOnboardingPopup/blob/main/LICENCE) file for more info.
