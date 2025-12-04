@@ -101,6 +101,7 @@ public final class BEOnboardingPopupViewController: UIViewController {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    /// Configures the initial view hierarchy, background, and starts the first step.
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
@@ -109,6 +110,7 @@ public final class BEOnboardingPopupViewController: UIViewController {
         updateStep(animated: false)
     }
 
+    /// Updates the overlay frame and spotlight path when the view layout changes (e.g., device rotation).
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         overlayView.frame = view.bounds
@@ -117,6 +119,7 @@ public final class BEOnboardingPopupViewController: UIViewController {
         }
     }
     
+    /// Configures the dimmed background layer and sets up the CAShapeLayer for the mask effect.
     private func setupOverlay() {
         overlayView.frame = view.bounds
         view.insertSubview(overlayView, at: 0)
@@ -125,6 +128,7 @@ public final class BEOnboardingPopupViewController: UIViewController {
         overlayView.layer.mask = maskLayer
     }
 
+    /// Adds subviews to the container and applies the initial Auto Layout constraints.
     private func setupUI() {
         [imageView, descriptionLabel, stepLabel, nextButton, backButton].forEach { containerView.addSubview($0) }
         
@@ -163,9 +167,27 @@ public final class BEOnboardingPopupViewController: UIViewController {
         NSLayoutConstraint.activate([
             containerWidthConstraint!, containerHeightConstraint!, containerLeadingConstraint!, containerTopConstraint!
         ])
+        
         stepLabel.isHidden = models.count == 1
     }
 
+    /// Handles the "Next" button tap. Advances to the next step or dismisses the popup if it's the last step.
+    @objc private func nextTapped() {
+        if currentIndex < models.count - 1 { currentIndex += 1; updateStep(animated: true) } else { dismiss(animated: true) { [weak self] in self?.onFinish() } }
+    }
+    
+    /// Handles the "Back" button tap. Returns to the previous step.
+    @objc private func backTapped() { guard currentIndex > 0 else { return }; currentIndex -= 1; updateStep(animated: true) }
+    
+    /// Handles taps on the dimmed background area. Functions as a "Next" action for better UX.
+    @objc private func overlayTapped() { nextTapped() }
+}
+
+
+private extension BEOnboardingPopupViewController {
+    
+    /// Creates a cut-out "hole" in the overlay layer to highlight the specified target frame.
+    /// - Parameter targetFrame: The frame of the UI element to be highlighted.
     private func updateSpotlight(for targetFrame: CGRect) {
         let path = UIBezierPath(rect: view.bounds)
         let hole = UIBezierPath(roundedRect: targetFrame, cornerRadius: 12)
@@ -174,6 +196,8 @@ public final class BEOnboardingPopupViewController: UIViewController {
         animatePopup(around: targetFrame)
     }
 
+    /// Calculates the optimal position for the popup (above, below, or center) relative to the target and animates the layout changes.
+    /// - Parameter targetFrame: The frame of the highlighted element to position the popup around.
     private func animatePopup(around targetFrame: CGRect) {
         let screenBounds = view.bounds
         let popupWidth = theme.popupWidth
@@ -193,8 +217,10 @@ public final class BEOnboardingPopupViewController: UIViewController {
 
         UIView.animate(withDuration: 0.25) { self.view.layoutIfNeeded() }
     }
-
-    private func updateStep(animated: Bool) {
+    
+    /// Updates the UI content (text, image, buttons) for the current step index and triggers the spotlight animation.
+    /// - Parameter animated: Determines if the layout update should be animated.
+    func updateStep(animated: Bool) {
         guard models.indices.contains(currentIndex) else { return }
         let model = models[currentIndex]
         
@@ -219,18 +245,14 @@ public final class BEOnboardingPopupViewController: UIViewController {
         updateSpotlight(for: model.targetFrame)
         onStepShown?(currentIndex)
     }
-
-    @objc private func nextTapped() {
-        if currentIndex < models.count - 1 { currentIndex += 1; updateStep(animated: true) } else { dismiss(animated: true) { [weak self] in self?.onFinish() } }
-    }
-    @objc private func backTapped() { guard currentIndex > 0 else { return }; currentIndex -= 1; updateStep(animated: true) }
-    @objc private func overlayTapped() { nextTapped() }
     
-    private func parseBoldText(text: String, separator: String, boldFont: UIFont, boldColor: UIColor) -> NSAttributedString {
+    /// Helper method to create an attributed string with bold text between specific separators.
+    func parseBoldText(text: String, separator: String, boldFont: UIFont, boldColor: UIColor) -> NSAttributedString {
         let parts = text.components(separatedBy: separator); let attr = NSMutableAttributedString()
         for (i, p) in parts.enumerated() {
             attr.append(NSAttributedString(string: p, attributes: [.font: i % 2 != 0 ? boldFont : stepLabel.font!, .foregroundColor: i % 2 != 0 ? boldColor : stepLabel.textColor!]))
         }
         return attr
     }
+    
 }

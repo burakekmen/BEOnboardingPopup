@@ -32,7 +32,7 @@ public struct BEOnboardingPopupTheme {
     public var backButtonTextColor: UIColor
     
     public var overlayColor: UIColor
-
+    
     public static let `default` = BEOnboardingPopupTheme(
         nextButtonText: "Next",
         backButtonText: "Back",
@@ -56,7 +56,27 @@ public struct BEOnboardingPopupTheme {
     )
     
     // Custom init
-    public init(nextButtonText: String = "Next", backButtonText: String = "Back", finishButtonText: String = "Got it", popupWidth: CGFloat = 300, imageHeight: CGFloat = 120, popupHeightWithImage: CGFloat = 240, popupHeightWithoutImage: CGFloat = 130, containerCornerRadius: CGFloat = 12, containerBackgroundColor: UIColor = .systemBackground, descriptionFont: UIFont = .systemFont(ofSize: 15), descriptionColor: UIColor = .label, stepLabelFont: UIFont = .systemFont(ofSize: 15), stepLabelColor: UIColor = .secondaryLabel, nextButtonFont: UIFont = .systemFont(ofSize: 15, weight: .semibold), nextButtonTextColor: UIColor = .systemGreen, nextButtonBorderColor: UIColor = .systemGreen, backButtonFont: UIFont = .systemFont(ofSize: 15, weight: .bold), backButtonTextColor: UIColor = .systemGreen, overlayColor: UIColor = UIColor.black.withAlphaComponent(0.6)) {
+    public init(
+        nextButtonText: String = "Next",
+        backButtonText: String = "Back",
+        finishButtonText: String = "Got it",
+        popupWidth: CGFloat = 300,
+        imageHeight: CGFloat = 120,
+        popupHeightWithImage: CGFloat = 240,
+        popupHeightWithoutImage: CGFloat = 130,
+        containerCornerRadius: CGFloat = 12,
+        containerBackgroundColor: UIColor = .systemBackground,
+        descriptionFont: UIFont = .systemFont(ofSize: 15),
+        descriptionColor: UIColor = .label,
+        stepLabelFont: UIFont = .systemFont(ofSize: 15),
+        stepLabelColor: UIColor = .secondaryLabel,
+        nextButtonFont: UIFont = .systemFont(ofSize: 15, weight: .semibold),
+        nextButtonTextColor: UIColor = .systemGreen,
+        nextButtonBorderColor: UIColor = .systemGreen,
+        backButtonFont: UIFont = .systemFont(ofSize: 15, weight: .bold),
+        backButtonTextColor: UIColor = .systemGreen,
+        overlayColor: UIColor = UIColor.black.withAlphaComponent(0.6))
+    {
         self.nextButtonText = nextButtonText
         self.backButtonText = backButtonText
         self.finishButtonText = finishButtonText
