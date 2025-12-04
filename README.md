@@ -7,7 +7,11 @@
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
 <p align="center">
-  <img src="https://github.com/burakekmen/BEOnboardingPopup/raw/main/BEOnboardingPopupSample/BEOnboardingPopupSample/BEOnboardingPopupSample.gif" alt="Demo Animation" width="600" />
+  <img src="https://github.com/burakekmen/BEOnboardingPopup/blob/main/BEOnboardingPopupSample/BEOnboardingPopupSample/sample.png" alt="Sample" width="300" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/burakekmen/BEOnboardingPopup/raw/main/BEOnboardingPopupSample/BEOnboardingPopupSample/BEOnboardingPopupSample.gif" alt="Demo Animation" width="400" />
 </p>
 
 ## ✨ Features
