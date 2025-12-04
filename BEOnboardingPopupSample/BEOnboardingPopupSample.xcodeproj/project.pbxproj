@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		282C0E3E2EE0518100402B69 /* BEOnboardingPopup in Frameworks */ = {isa = PBXBuildFile; productRef = 282C0E3D2EE0518100402B69 /* BEOnboardingPopup */; };
+		28658E392EE1B1A500540164 /* BEOnboardingPopup in Frameworks */ = {isa = PBXBuildFile; productRef = 28658E382EE1B1A500540164 /* BEOnboardingPopup */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				282C0E3E2EE0518100402B69 /* BEOnboardingPopup in Frameworks */,
+				28658E392EE1B1A500540164 /* BEOnboardingPopup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +86,7 @@
 			name = BEOnboardingPopupSample;
 			packageProductDependencies = (
 				282C0E3D2EE0518100402B69 /* BEOnboardingPopup */,
+				28658E382EE1B1A500540164 /* BEOnboardingPopup */,
 			);
 			productName = BEOnboardingPopupSample;
 			productReference = 282C0E242EE0513F00402B69 /* BEOnboardingPopupSample.app */;
@@ -114,7 +117,7 @@
 			mainGroup = 282C0E1B2EE0513F00402B69;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				282C0E3C2EE0518100402B69 /* XCLocalSwiftPackageReference "../../BEOnboardingPopup" */,
+				28658E372EE1B1A500540164 /* XCRemoteSwiftPackageReference "BEOnboardingPopup" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 282C0E252EE0513F00402B69 /* Products */;
@@ -345,16 +348,25 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		282C0E3C2EE0518100402B69 /* XCLocalSwiftPackageReference "../../BEOnboardingPopup" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../BEOnboardingPopup;
+/* Begin XCRemoteSwiftPackageReference section */
+		28658E372EE1B1A500540164 /* XCRemoteSwiftPackageReference "BEOnboardingPopup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/burakekmen/BEOnboardingPopup";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		282C0E3D2EE0518100402B69 /* BEOnboardingPopup */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = BEOnboardingPopup;
+		};
+		28658E382EE1B1A500540164 /* BEOnboardingPopup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 28658E372EE1B1A500540164 /* XCRemoteSwiftPackageReference "BEOnboardingPopup" */;
 			productName = BEOnboardingPopup;
 		};
 /* End XCSwiftPackageProductDependency section */

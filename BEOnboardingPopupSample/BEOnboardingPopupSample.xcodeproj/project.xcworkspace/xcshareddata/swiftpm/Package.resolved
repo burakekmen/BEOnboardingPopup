@@ -1,0 +1,15 @@
+{
+  "originHash" : "8afff37888936cec6c139724825ab71acf51a066d517c18e476f0110cfe1a001",
+  "pins" : [
+    {
+      "identity" : "beonboardingpopup",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/burakekmen/BEOnboardingPopup",
+      "state" : {
+        "revision" : "526c3909350798d49640281a4f424cb6c12818b1",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

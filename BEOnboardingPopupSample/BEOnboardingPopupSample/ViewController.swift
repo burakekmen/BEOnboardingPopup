@@ -8,342 +8,232 @@
 import UIKit
 import BEOnboardingPopup
 
-// MARK: - 1. Demo Data (English)
 enum DemoStep: BEOnboardingStepable {
-    case profile
-    case notifications
-    case settings
+    case profile, notifications, upgrades, settings
     
     var text: String {
         switch self {
-        case .profile: return "Tap on your profile picture to edit account details and privacy settings."
-        case .notifications: return "Stay updated! Enable notifications to receive the latest news and alerts."
-        case .settings: return "Need help? You can configure app preferences and themes here."
+        case .profile: return "Tap on your profile picture to edit personal details and account settings."
+        case .notifications: return "Turn on notifications to get instant updates on new features and campaigns!"
+        case .upgrades: return "You can use this section to upgrade to Premium features."
+        case .settings: return "App settings, themes, and logout options are located here."
         }
     }
     
     var image: UIImage? {
         switch self {
         case .profile: return UIImage(systemName: "person.crop.circle.fill")
-        case .notifications: return UIImage(systemName: "bell.fill")
-        case .settings: return nil // No image for this step
+        case .notifications: return UIImage(systemName: "bell.badge.fill")
+        case .upgrades: return UIImage(systemName: "star.circle.fill")
+        case .settings: return nil // Example of a step without an image
         }
     }
 }
 
-// MARK: - 2. Main Screen (The Stage)
+// Pre-defined Color Themes
+enum ColorTheme: Int, CaseIterable {
+    case system, ocean, sunset, dark
+    
+    var title: String {
+        switch self {
+        case .system: return "System (Default)"
+        case .ocean: return "Ocean Blue"
+        case .sunset: return "Sunset"
+        case .dark: return "Dark Mode"
+        }
+    }
+    
+    @MainActor
+    func apply(to theme: inout BEOnboardingPopupTheme) {
+        switch self {
+        case .system:
+            theme.containerBackgroundColor = .systemBackground
+            theme.descriptionColor = .label
+            theme.nextButtonTextColor = .systemBlue
+            theme.nextButtonBorderColor = .systemBlue
+            
+        case .ocean:
+            theme.containerBackgroundColor = UIColor(red: 0.92, green: 0.96, blue: 1.0, alpha: 1.0)
+            theme.descriptionColor = UIColor(red: 0.0, green: 0.2, blue: 0.4, alpha: 1.0)
+            theme.nextButtonTextColor = UIColor(red: 0.0, green: 0.4, blue: 0.8, alpha: 1.0)
+            theme.nextButtonBorderColor = theme.nextButtonTextColor
+            
+        case .sunset:
+            theme.containerBackgroundColor = UIColor(red: 1.0, green: 0.95, blue: 0.9, alpha: 1.0)
+            theme.descriptionColor = UIColor(red: 0.4, green: 0.2, blue: 0.0, alpha: 1.0)
+            theme.nextButtonTextColor = .systemOrange
+            theme.nextButtonBorderColor = .systemOrange
+            
+        case .dark:
+            theme.containerBackgroundColor = UIColor(white: 0.15, alpha: 1.0)
+            theme.descriptionColor = .white
+            theme.nextButtonTextColor = .white
+            theme.nextButtonBorderColor = .white
+            theme.backButtonTextColor = .lightGray
+            theme.stepLabelColor = .lightGray
+        }
+        
+        // Adjust back button color for non-system/dark themes
+        if self != .system && self != .dark {
+            theme.backButtonTextColor = theme.nextButtonTextColor.withAlphaComponent(0.7)
+            theme.stepLabelColor = theme.nextButtonTextColor.withAlphaComponent(0.7)
+        }
+    }
+}
+
 class ViewController: UIViewController {
     
-    // Default theme state
+    // Store current theme state
     private var currentTheme: BEOnboardingPopupTheme = .default
+
+    // --- Target UI Elements ---
     
-    // --- Target Views ---
-    private lazy var profileIcon: UIImageView = {
-        let iv = UIImageView(image: UIImage(systemName: "person.circle"))
-        iv.tintColor = .systemGray; iv.contentMode = .scaleAspectFit
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        return iv
+    // profileBarItem
+    private lazy var profileButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setImage(UIImage(systemName: "person.circle"), for: .normal)
+        return btn
+    }()
+
+    private lazy var profileBarItem: UIBarButtonItem = {
+        return UIBarButtonItem(customView: profileButton)
     }()
     
+    // notificationBarItem
     private lazy var notificationButton: UIButton = {
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(systemName: "bell.fill"), for: .normal)
-        btn.tintColor = .systemOrange
-        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setImage(UIImage(systemName: "bell"), for: .normal)
         return btn
+    }()
+
+    private lazy var notificationBarItem: UIBarButtonItem = {
+        return UIBarButtonItem(customView: notificationButton)
+    }()
+
+    private lazy var upgradeCardView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemYellow.withAlphaComponent(0.2)
+        view.layer.cornerRadius = 16
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.systemYellow.cgColor
+        
+        let icon = UIImageView(image: UIImage(systemName: "star.fill"))
+        icon.tintColor = .systemOrange
+        let lbl = UILabel(); lbl.text = "Go Premium"; lbl.font = .boldSystemFont(ofSize: 16)
+        
+        let stack = UIStackView(arrangedSubviews: [icon, lbl]); stack.spacing = 10; stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stack)
+        NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo: view.centerXAnchor), stack.centerYAnchor.constraint(equalTo: view.centerYAnchor)])
+        return view
     }()
     
     private lazy var settingsButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.setTitle("App Settings", for: .normal)
-        btn.backgroundColor = .systemGray5
-        btn.layer.cornerRadius = 8
+        var config = UIButton.Configuration.tinted()
+        config.title = "Settings"
+        config.image = UIImage(systemName: "gearshape")
+        config.imagePadding = 8
+        config.cornerStyle = .medium
+        let btn = UIButton(configuration: config)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
     
     private lazy var configureButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.setTitle("⚙️ Configure & Test Popup", for: .normal)
-        btn.backgroundColor = .systemBlue
-        btn.setTitleColor(.white, for: .normal)
-        btn.layer.cornerRadius = 12
-        btn.titleLabel?.font = .boldSystemFont(ofSize: 16)
+        var config = UIButton.Configuration.filled()
+        config.title = "🎨 Customize & Preview"
+        config.baseBackgroundColor = .systemIndigo
+        config.cornerStyle = .capsule
+        config.buttonSize = .large
+        let btn = UIButton(configuration: config)
         btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.addTarget(self, action: #selector(navigateToSettings), for: .touchUpInside)
+        btn.addTarget(self, action: #selector(openSettings), for: .touchUpInside)
         return btn
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        title = "Demo Home"
+        title = "Home"
         setupUI()
     }
     
     private func setupUI() {
-        view.addSubview(profileIcon)
-        view.addSubview(notificationButton)
+        // Navbar buttons (Targets 1 & 2)
+        navigationItem.rightBarButtonItems = [profileBarItem, notificationBarItem]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .camera) // Just decoration
+        
+        view.addSubview(upgradeCardView)
         view.addSubview(settingsButton)
         view.addSubview(configureButton)
         
+        upgradeCardView.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            // Targets placed distinctly
-            profileIcon.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            profileIcon.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            profileIcon.widthAnchor.constraint(equalToConstant: 44), profileIcon.heightAnchor.constraint(equalToConstant: 44),
+            // Target 3: A card in the center
+            upgradeCardView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            upgradeCardView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            upgradeCardView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            upgradeCardView.heightAnchor.constraint(equalToConstant: 80),
             
-            notificationButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            notificationButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            notificationButton.widthAnchor.constraint(equalToConstant: 44), notificationButton.heightAnchor.constraint(equalToConstant: 44),
-            
-            settingsButton.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            // Target 4: A button below
+            settingsButton.topAnchor.constraint(equalTo: upgradeCardView.bottomAnchor, constant: 150),
             settingsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            settingsButton.widthAnchor.constraint(equalToConstant: 140),
             
-            // Configure Button
-            configureButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
-            configureButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            configureButton.widthAnchor.constraint(equalToConstant: 280),
-            configureButton.heightAnchor.constraint(equalToConstant: 54)
+            // Trigger Button
+            configureButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            configureButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
+            configureButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            configureButton.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
     
-    @objc private func navigateToSettings() {
-        let settingsVC = SettingsViewController(currentTheme: currentTheme)
+    @objc private func openSettings() {
+        let settingsVC = SettingsViewController(initialTheme: currentTheme)
         settingsVC.delegate = self
-        navigationController?.pushViewController(settingsVC, animated: true)
+        
+        // iOS 15+ Modern Sheet Presentation
+        if let sheet = settingsVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.largestUndimmedDetentIdentifier = .medium // Allow interaction with background
+        }
+        present(settingsVC, animated: true)
     }
 }
 
-// MARK: - Delegate Implementation
+// Handle updates from Settings Screen
 extension ViewController: SettingsDelegate {
-    func didUpdateThemeAndRun(_ theme: BEOnboardingPopupTheme) {
+    func didFinishConfiguring(with theme: BEOnboardingPopupTheme) {
         self.currentTheme = theme
         
-        // Wait for pop animation to finish slightly for better UX
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.startOnboarding()
+        var availableSteps: [(DemoStep, UIView)] = []
+        
+        if profileButton.window != nil {
+            availableSteps.append((.profile, profileButton))
         }
-    }
-    
-    private func startOnboarding() {
-        let steps: [(DemoStep, UIView)] = [
-            (.profile, profileIcon),
-            (.notifications, notificationButton),
-            (.settings, settingsButton)
-        ]
         
-        BEOnboardingPopupManager.shared.show(
-            on: self,
-            items: steps,
-            theme: currentTheme,
-            onFinish: { print("Onboarding Flow Finished") }
-        )
-    }
-}
-
-// MARK: - 3. Settings Screen (Deep Customization)
-protocol SettingsDelegate: AnyObject {
-    func didUpdateThemeAndRun(_ theme: BEOnboardingPopupTheme)
-}
-
-class SettingsViewController: UIViewController {
-    
-    weak var delegate: SettingsDelegate?
-    private var tempTheme: BEOnboardingPopupTheme
-    
-    // --- UI Components ---
-    private let scrollView = UIScrollView()
-    private let stackView = UIStackView()
-    
-    // Section: Layout
-    private let widthSlider = UISlider()
-    private let radiusSlider = UISlider()
-    private let imgHeightSlider = UISlider()
-    
-    // Section: Typography & Content
-    private let fontSizeSlider = UISlider()
-    private let nextTxtField = UITextField()
-    private let backTxtField = UITextField()
-    
-    // Section: Colors (Simplified with Segments)
-    private let bgStyleSegment = UISegmentedControl(items: ["System", "Dark", "Ocean", "Cream"])
-    private let accentColorSegment = UISegmentedControl(items: ["Green", "Blue", "Orange", "Purple"])
-    private let overlaySlider = UISlider()
-
-    init(currentTheme: BEOnboardingPopupTheme) {
-        self.tempTheme = currentTheme
-        super.init(nibName: nil, bundle: nil)
-    }
-    required init?(coder: NSCoder) { fatalError() }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        title = "Customize Popup"
-        setupScrollView()
-        setupForm()
-        loadCurrentValues()
-    }
-    
-    private func setupScrollView() {
-        view.addSubview(scrollView)
-        scrollView.addSubview(stackView)
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-        stackView.spacing = 24
-        stackView.layoutMargins = UIEdgeInsets(top: 20, left: 20, bottom: 40, right: 20)
-        stackView.isLayoutMarginsRelativeArrangement = true
+        if notificationButton.window != nil {
+            availableSteps.append((.notifications, notificationButton))
+        }
         
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        availableSteps.append((.upgrades, upgradeCardView))
+        availableSteps.append((.settings, settingsButton))
+        
+        guard !availableSteps.isEmpty else { return }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             
-            stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
-        ])
-    }
-    
-    private func setupForm() {
-        // 1. Run Button Section
-        let runButton = UIButton(type: .system)
-        runButton.setTitle("Apply & Run Demo", for: .normal)
-        runButton.backgroundColor = .systemBlue
-        runButton.setTitleColor(.white, for: .normal)
-        runButton.layer.cornerRadius = 10
-        runButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        runButton.addTarget(self, action: #selector(saveAndRun), for: .touchUpInside)
-        stackView.addArrangedSubview(runButton)
-        
-        addSeparator(text: "DIMENSIONS")
-        addControl(title: "Popup Width (250-350)", control: widthSlider, min: 250, max: 350)
-        addControl(title: "Corner Radius (0-40)", control: radiusSlider, min: 0, max: 40)
-        addControl(title: "Image Height (50-200)", control: imgHeightSlider, min: 50, max: 200)
-        
-        addSeparator(text: "COLORS & THEME")
-        addControl(title: "Background Style", control: bgStyleSegment)
-        addControl(title: "Accent Color (Buttons/Steps)", control: accentColorSegment)
-        addControl(title: "Overlay Opacity (0.0 - 0.9)", control: overlaySlider, min: 0.0, max: 0.9)
-        
-        addSeparator(text: "TEXT & FONTS")
-        addControl(title: "Font Size Scale (12-18)", control: fontSizeSlider, min: 12, max: 18)
-        
-        nextTxtField.borderStyle = .roundedRect; nextTxtField.placeholder = "Next Btn"
-        backTxtField.borderStyle = .roundedRect; backTxtField.placeholder = "Back Btn"
-        let textStack = UIStackView(arrangedSubviews: [nextTxtField, backTxtField])
-        textStack.distribution = .fillEqually; textStack.spacing = 10
-        addControl(title: "Button Labels", control: textStack)
-    }
-    
-    private func loadCurrentValues() {
-        widthSlider.value = Float(tempTheme.popupWidth)
-        radiusSlider.value = Float(tempTheme.containerCornerRadius)
-        imgHeightSlider.value = Float(tempTheme.imageHeight)
-        
-        var white: CGFloat = 0; var alpha: CGFloat = 0
-        tempTheme.overlayColor.getWhite(&white, alpha: &alpha)
-        overlaySlider.value = Float(alpha)
-        
-        // Font size approximation
-        fontSizeSlider.value = Float(tempTheme.descriptionFont.pointSize)
-        
-        nextTxtField.text = tempTheme.nextButtonText
-        backTxtField.text = tempTheme.backButtonText
-        
-        bgStyleSegment.selectedSegmentIndex = 0
-        accentColorSegment.selectedSegmentIndex = 0 // Default Green/System
-    }
-    
-    @objc private func saveAndRun() {
-        // Gather Values
-        tempTheme.popupWidth = CGFloat(widthSlider.value)
-        tempTheme.containerCornerRadius = CGFloat(radiusSlider.value)
-        tempTheme.imageHeight = CGFloat(imgHeightSlider.value)
-        tempTheme.popupHeightWithImage = CGFloat(imgHeightSlider.value) + 120
-        tempTheme.overlayColor = UIColor.black.withAlphaComponent(CGFloat(overlaySlider.value))
-        
-        if let next = nextTxtField.text, !next.isEmpty { tempTheme.nextButtonText = next }
-        if let back = backTxtField.text, !back.isEmpty { tempTheme.backButtonText = back }
-        
-        // Apply Fonts
-        let size = CGFloat(fontSizeSlider.value)
-        tempTheme.descriptionFont = .systemFont(ofSize: size, weight: .regular)
-        tempTheme.stepLabelFont = .systemFont(ofSize: size, weight: .regular)
-        tempTheme.nextButtonFont = .systemFont(ofSize: size, weight: .bold)
-        tempTheme.backButtonFont = .systemFont(ofSize: size, weight: .bold)
-        
-        // Apply Colors Logic
-        applyColorLogic()
-        
-        // Notify & Pop
-        navigationController?.popViewController(animated: true)
-        delegate?.didUpdateThemeAndRun(tempTheme)
-    }
-    
-    private func applyColorLogic() {
-        // 1. Background
-        switch bgStyleSegment.selectedSegmentIndex {
-        case 1: // Dark
-            tempTheme.containerBackgroundColor = UIColor(white: 0.15, alpha: 1.0)
-            tempTheme.descriptionColor = .white
-        case 2: // Ocean
-            tempTheme.containerBackgroundColor = UIColor(red: 0.90, green: 0.96, blue: 1.0, alpha: 1.0)
-            tempTheme.descriptionColor = .black
-        case 3: // Cream
-            tempTheme.containerBackgroundColor = UIColor(red: 1.0, green: 0.98, blue: 0.90, alpha: 1.0)
-            tempTheme.descriptionColor = .brown
-        default: // System
-            tempTheme.containerBackgroundColor = .systemBackground
-            tempTheme.descriptionColor = .label
+            BEOnboardingPopupManager.shared.show(
+                on: self,
+                items: availableSteps,
+                theme: self.currentTheme,
+                onFinish: {
+                    print("Demo finished.")
+                }
+            )
         }
         
-        // 2. Accents
-        let accent: UIColor
-        switch accentColorSegment.selectedSegmentIndex {
-        case 1: accent = .systemBlue
-        case 2: accent = .systemOrange
-        case 3: accent = .systemPurple
-        default: accent = .systemGreen
-        }
-        
-        tempTheme.nextButtonTextColor = (bgStyleSegment.selectedSegmentIndex == 1) ? .white : accent
-        tempTheme.nextButtonBorderColor = (bgStyleSegment.selectedSegmentIndex == 1) ? .white : accent
-        tempTheme.backButtonTextColor = (bgStyleSegment.selectedSegmentIndex == 1) ? .lightGray : accent
-        tempTheme.stepLabelColor = (bgStyleSegment.selectedSegmentIndex == 1) ? .lightGray : accent
-    }
-    
-    // MARK: - UI Helpers
-    private func addSeparator(text: String) {
-        let lbl = UILabel()
-        lbl.text = text
-        lbl.font = .systemFont(ofSize: 13, weight: .heavy)
-        lbl.textColor = .secondaryLabel
-        stackView.addArrangedSubview(lbl)
-    }
-    
-    private func addControl(title: String, control: UIView, min: Float? = nil, max: Float? = nil) {
-        let container = UIStackView()
-        container.axis = .vertical
-        container.spacing = 8
-        
-        let lbl = UILabel()
-        lbl.text = title
-        lbl.font = .systemFont(ofSize: 15, weight: .medium)
-        
-        if let slider = control as? UISlider, let min = min, let max = max {
-            slider.minimumValue = min
-            slider.maximumValue = max
-        }
-        
-        container.addArrangedSubview(lbl)
-        container.addArrangedSubview(control)
-        stackView.addArrangedSubview(container)
     }
 }
